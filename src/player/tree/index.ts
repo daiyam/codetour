@@ -103,9 +103,9 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
 
         return [item];
       } else {
-        return element.tour.steps.map(
-          (_, index) => new CodeTourStepNode(element.tour, index)
-        );
+        return await Promise.all(element.tour.steps.map(
+          async (_, index) => await new CodeTourStepNode(element.tour, index).init()
+        ));
       }
     }
   }
@@ -141,7 +141,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   }
 }
 
-export function registerTreeProvider(extensionPath: string) {
+export async function registerTreeProvider(extensionPath: string) {
   const treeDataProvider = new CodeTourTreeProvider(extensionPath);
   const treeView = window.createTreeView(`${EXTENSION_NAME}.tours`, {
     showCollapseAll: true,
@@ -150,17 +150,17 @@ export function registerTreeProvider(extensionPath: string) {
   });
 
   let isRevealPending = false;
-  treeView.onDidChangeVisibility(e => {
+  treeView.onDidChangeVisibility(async (e) => {
     if (e.visible && isRevealPending) {
       isRevealPending = false;
-      revealCurrentStepNode();
+      await revealCurrentStepNode();
     }
   });
-
-  function revealCurrentStepNode() {
-    setTimeout(() => {
+  
+  async function revealCurrentStepNode() {
+    setTimeout(async () => {
       treeView.reveal(
-        new CodeTourStepNode(store.activeTour!.tour, store.activeTour!.step)
+        await new CodeTourStepNode(store.activeTour!.tour, store.activeTour!.step).init()
       );
     }, 300);
   }
@@ -175,7 +175,7 @@ export function registerTreeProvider(extensionPath: string) {
           ]
         : null
     ],
-    () => {
+    async () => {
       if (store.activeTour && store.activeTour.step >= 0) {
         if (
           !treeView.visible ||
@@ -185,7 +185,7 @@ export function registerTreeProvider(extensionPath: string) {
           return;
         }
 
-        revealCurrentStepNode();
+        await revealCurrentStepNode();
       } else {
         // TODO: Once VS Code supports it, we want
         // to de-select the step node once the tour ends.

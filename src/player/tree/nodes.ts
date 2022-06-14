@@ -132,7 +132,7 @@ export class CodeTourStepNode extends TreeItem {
       if (step.icon.startsWith('.')) {
         const resourceRoot = workspaceRoot
           ? workspaceRoot
-          : getWorkspaceUri(tour);
+          : getWorkspaceUri(this.tour);
           
           this.iconPath = getFileUri(step.icon, resourceRoot);
       } else {
